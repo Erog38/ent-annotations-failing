@@ -1,0 +1,59 @@
+{{/* gotype: entgo.io/ent/entc/gen.Graph */}}
+package ent
+
+{{ range $n := $.Nodes }}
+    {{- $builder := $n.UpdateOneName }}
+    {{- $receiver := receiver $builder }}
+
+func ({{ $receiver }} *{{ $builder }}) Update{{ $n.Name }}(input *{{ $n.Name }}, id string) *{{ $builder }} {
+    {{- range $f := $n.Fields }}
+        {{- if $f.Annotations.Unsettable }}
+            {{continue}}
+        {{- end}}
+
+        {{- if $f.Immutable }}
+          {{continue}}
+        {{- end}}
+
+        {{- if and $f.Nillable }}
+            {{- $setter := print "SetNillable" $f.StructField }}
+            {{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
+        {{- else }}
+            var {{$f.Name}} {{$f.Type}}
+            if input.{{$f.StructField}} != {{$f.Name}} {
+            {{- $setter := print "Set" $f.StructField }}
+            {{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
+            }
+        {{- end }}
+    {{- end }}
+    return {{ $receiver }}
+}
+
+    {{- $builder = $n.CreateName }}
+    {{- $receiver = receiver $builder }}
+
+func ({{ $receiver }} *{{ $builder }}) Create{{ $n.Name }}(input *{{ $n.Name }}) *{{ $builder }} {
+    {{- range $f := $n.Fields }}
+
+        {{- if $f.Annotations.UpdateOnly }}
+            {{continue}}
+        {{- end }}
+
+        {{- if $f.Annotations.Unsettable }}
+            {{continue}}
+        {{- end }}
+
+        {{- if $f.Nillable }}
+            {{- $setter := print "SetNillable" $f.StructField }}
+            {{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
+        {{- else }}
+            var {{$f.Name}} {{$f.Type}}
+            if input.{{$f.StructField}} != {{$f.Name}} {
+                {{- $setter := print "Set" $f.StructField }}
+                {{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
+            }
+        {{- end }}
+    {{- end }}
+    return {{ $receiver }}
+    }
+{{ end }}
